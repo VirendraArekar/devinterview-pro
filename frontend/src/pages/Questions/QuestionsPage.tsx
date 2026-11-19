@@ -6,6 +6,7 @@ import { Card } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Skeleton } from '../../components/common/Skeleton';
+import { Pagination } from '../../components/common/Pagination';
 import {
   Search,
   Filter,
@@ -25,6 +26,7 @@ export const QuestionsPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [categories, setCategories] = useState<{ name: string; count: number }[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -63,6 +65,7 @@ export const QuestionsPage: React.FC = () => {
         });
         setQuestions(data.items);
         setTotal(data.total);
+        setTotalPages(data.totalPages || Math.ceil(data.total / 15) || 1);
       } catch (err) {
         toast.error('Failed to load interview questions');
       } finally {
@@ -379,6 +382,20 @@ export const QuestionsPage: React.FC = () => {
                 );
               })}
             </div>
+          )}
+
+          {questions.length > 0 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              pageSize={15}
+              onPageChange={(p) => {
+                setPage(p);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="rounded-xl border border-slate-200 dark:border-slate-800 mt-6"
+            />
           )}
         </div>
       </div>

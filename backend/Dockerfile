@@ -20,6 +20,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
 
+# Install runtime execution environments for multi-language runner: Python, Java, C++
+RUN apk add --no-cache python3 openjdk17-jre g++
+
 # Copy compiled artifacts and modules directly from builder
 COPY package.json ./
 COPY --from=builder /app/node_modules ./node_modules
