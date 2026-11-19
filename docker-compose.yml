@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: devinterview-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret_password_2026
+      MYSQL_DATABASE: devinterview_db
+      MYSQL_USER: devinterview
+      MYSQL_PASSWORD: devinterview_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - devinterview-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "devinterview", "-pdevinterview_secret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devinterview-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - devinterview-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devinterview-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: devinterview
+      DB_PASSWORD: devinterview_secret
+      DB_DATABASE: devinterview_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: devinterview_super_secure_jwt_secret_key_2026_at_least_32_characters_long
+      JWT_EXPIRES_IN: 1d
+      JWT_REFRESH_SECRET: devinterview_refresh_secret_key_2026_very_secure_long_string
+      JWT_REFRESH_EXPIRES_IN: 7d
+      CLIENT_URL: http://localhost:80
+    ports:
+      - "4000:4000"
+    networks:
+      - devinterview-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devinterview-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - devinterview-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  devinterview-network:
+    driver: bridge

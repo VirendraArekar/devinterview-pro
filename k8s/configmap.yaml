@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devinterview-pro
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: devinterview-config
+  namespace: devinterview-pro
+data:
+  PORT: "4000"
+  NODE_ENV: "production"
+  DB_TYPE: "mysql"
+  DB_HOST: "mysql-service"
+  DB_PORT: "3306"
+  DB_DATABASE: "devinterview_db"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  CLIENT_URL: "https://devinterview.pro"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: devinterview-secrets
+  namespace: devinterview-pro
+type: Opaque
+stringData:
+  DB_USERNAME: "devinterview"
+  DB_PASSWORD: "devinterview_secret"
+  MYSQL_ROOT_PASSWORD: "root_secret_password_2026"
+  JWT_SECRET: "devinterview_super_secure_jwt_secret_key_2026_at_least_32_characters_long"
+  JWT_REFRESH_SECRET: "devinterview_refresh_secret_key_2026_very_secure_long_string"
