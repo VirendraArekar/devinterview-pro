@@ -52,6 +52,8 @@ const entities = [
             entities,
             synchronize: true, // Auto synchronize schema for dev/staging
             logging: false,
+            retryAttempts: 15,
+            retryDelay: 3000,
           };
         }
 

@@ -60,7 +60,19 @@ export async function runSeeds() {
     });
   }
 
-  await dataSource.initialize();
+  let connected = false;
+  let attempts = 0;
+  while (!connected && attempts < 15) {
+    try {
+      await dataSource.initialize();
+      connected = true;
+    } catch (err) {
+      attempts++;
+      if (attempts >= 15) throw err;
+      console.log(`⏳ Database connection retry (${attempts}/15)...`);
+      await new Promise((res) => setTimeout(res, 2000));
+    }
+  }
   console.log(`✅ Connected to database (${dbType})`);
 
   const userRepo = dataSource.getRepository(User);
