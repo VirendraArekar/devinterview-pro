@@ -5,4 +5,6 @@ build/
 *.log
 .DS_Store
 *.sqlite
-data/*.sqlite
+/data/
+/backend/data/
+*.sqlite-journal

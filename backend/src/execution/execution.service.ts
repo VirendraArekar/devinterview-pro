@@ -123,7 +123,21 @@ export class ExecutionService {
 
       const cleanExpected = tc.expectedOutput.trim().replace(/\r\n/g, '\n');
       const cleanActual = (runRes.stdout || '').trim().replace(/\r\n/g, '\n');
-      const isPassed = cleanExpected === cleanActual && !runRes.error;
+      let isPassed = cleanExpected === cleanActual && !runRes.error;
+
+      if (!isPassed && !runRes.error) {
+        try {
+          const parsedExp = JSON.parse(cleanExpected);
+          const parsedAct = JSON.parse(cleanActual);
+          if (JSON.stringify(parsedExp) === JSON.stringify(parsedAct)) {
+            isPassed = true;
+          }
+        } catch {
+          if (cleanExpected.replace(/\s+/g, '') === cleanActual.replace(/\s+/g, '')) {
+            isPassed = true;
+          }
+        }
+      }
 
       if (isPassed) {
         passedCount++;

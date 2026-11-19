@@ -121,18 +121,83 @@ export async function runSeeds() {
     console.log('👤 Seeded default Admin and Demo Developer users');
   }
 
-  // 2. Seed Question Bank
-  const questionCount = await questionRepo.count();
-  if (questionCount === 0) {
-    await questionRepo.save(questionRepo.create(initialQuestionsSeed));
-    console.log(`📚 Seeded ${initialQuestionsSeed.length} comprehensive technical interview questions`);
+  function findDataFile(filename: string): string | null {
+    const candidates = [
+      path.join(__dirname, 'data', filename),
+      path.join(process.cwd(), 'dist', 'database', 'seeds', 'data', filename),
+      path.join(process.cwd(), 'src', 'database', 'seeds', 'data', filename),
+      path.join(process.cwd(), 'backend', 'src', 'database', 'seeds', 'data', filename),
+    ];
+    for (const c of candidates) {
+      if (fs.existsSync(c)) return c;
+    }
+    return null;
   }
 
-  // 3. Seed Coding Problems
+  // 2. Seed Question Bank (Target: 500+ comprehensive subjective interview questions)
+  const questionCount = await questionRepo.count();
+  if (questionCount < 500) {
+    const existing = await questionRepo.find({ select: ['slug'] });
+    const existingSlugs = new Set(existing.map((e) => e.slug));
+
+    const allQuestions = [...initialQuestionsSeed];
+    const qFile = findDataFile('questions-comprehensive.json');
+    if (qFile) {
+      try {
+        const loaded = JSON.parse(fs.readFileSync(qFile, 'utf-8'));
+        allQuestions.push(...loaded);
+      } catch (e: any) {
+        console.warn(`Notice loading questions-comprehensive.json: ${e.message}`);
+      }
+    }
+
+    const toInsert = allQuestions.filter((q) => {
+      if (existingSlugs.has(q.slug)) return false;
+      existingSlugs.add(q.slug);
+      return true;
+    });
+
+    if (toInsert.length > 0) {
+      const chunkSize = 50;
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        const chunk = toInsert.slice(i, i + chunkSize);
+        await questionRepo.save(questionRepo.create(chunk));
+      }
+    }
+    console.log(`📚 Seeded ${toInsert.length} technical interview questions (Total in DB: ${await questionRepo.count()})`);
+  }
+
+  // 3. Seed Coding Problems (Target: 500+ coding challenges across 22 DSA categories)
   const problemCount = await problemRepo.count();
-  if (problemCount === 0) {
-    await problemRepo.save(problemRepo.create(initialCodingProblemsSeed));
-    console.log(`💻 Seeded ${initialCodingProblemsSeed.length} LeetCode-style coding challenges`);
+  if (problemCount < 500) {
+    const existing = await problemRepo.find({ select: ['slug'] });
+    const existingSlugs = new Set(existing.map((e) => e.slug));
+
+    const allProblems = [...initialCodingProblemsSeed];
+    const cFile = findDataFile('coding-comprehensive.json');
+    if (cFile) {
+      try {
+        const loaded = JSON.parse(fs.readFileSync(cFile, 'utf-8'));
+        allProblems.push(...loaded);
+      } catch (e: any) {
+        console.warn(`Notice loading coding-comprehensive.json: ${e.message}`);
+      }
+    }
+
+    const toInsert = allProblems.filter((p) => {
+      if (existingSlugs.has(p.slug)) return false;
+      existingSlugs.add(p.slug);
+      return true;
+    });
+
+    if (toInsert.length > 0) {
+      const chunkSize = 50;
+      for (let i = 0; i < toInsert.length; i += chunkSize) {
+        const chunk = toInsert.slice(i, i + chunkSize);
+        await problemRepo.save(problemRepo.create(chunk));
+      }
+    }
+    console.log(`💻 Seeded ${toInsert.length} LeetCode-style coding challenges (Total in DB: ${await problemRepo.count()})`);
   }
 
   // 4. Seed System Design Topics
